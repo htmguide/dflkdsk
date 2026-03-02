@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дистрибуция релиза</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {--bg:#000;--text:#00bfff;--accent:#00bfff;--error:#ff6b6b;--border:#00bfff}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Press Start 2P', cursive;
+    font-size:12px;
+    `line-height:1.8;`
+    margin:0;
+    padding:20px;
+  }
+  .wrap{max-width:800px;margin:0 auto;padding:30px;border:2px solid var(--border)}
+  h1{font-size:16px;text-align:center;margin:0 0 30px 0;text-transform:uppercase;letter-spacing:2px}
+  label{display:block;margin:18px 0 6px}
+  label span.req{color:var(--error)}
+  input, select, textarea, button{
+    font-family:'Press Start 2P', cursive;
+    font-size:12px;
+  }
+  input[type=text],input[type=date],select,textarea{
+    `width:100%;`
+    background:#111;
+    color:var(--text);
+    `border:2px solid var(--border);`
+    padding:10px;
+    box-sizing:border-box;
+    outline:none;
+  }
+  input[type=file]{
+    color:var(--text);
+    margin-top:5px;
+  }
+  .checkbox{display:flex;align-items:center;margin:20px 0}
+  .checkbox input{margin-right:10px}
+  #lyricsBox{display:none}
+  button{
+    background:#000;
+    color:var(--text);
+    border:2px solid var(--border);
+    padding:12px 20px;
+    cursor:pointer;
+    margin-top:20px;
+    width:100%;
+    text-transform:uppercase;
+  }
+  button:hover{background:var(--text);color:#000}
+  .msg{font-size:10px;margin-top:5px}
+  .error{color:var(--error)}
+  .preview{max-width:200px;margin-top:10px;border:2px solid var(--border);display:none}
+  .row{display:flex;gap:15px}
+  .row > *{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Дистрибуция релиза</h1>
+
+  <!-- Вставь свой токен Formspree (mdalraza) -->
+  <form action="https://formspree.io/f/mdalraza" method="POST" enctype="multipart/form-data">
+
+    <label>1) Название релиза <span class="req">*</span>
+      <input type="text" name="Название релиза" required>
+    </label>
+
+    <label>2) Артист(-ы) <span class="req">*</span>
+      <input type="text" name="Артист(ы)" placeholder="Через запятую" required>
+    </label>
+
+    <div class="row">
+      <label>3) Жанр релиза <span class="req">*</span>
+        <input type="text" name="Жанр" list="genres" required>
+        <datalist id="genres">
+          <option>Pop</option><option>Hip-Hop</option><option>Electronic</option>
+          <option>Rock</option><option>Lo-Fi</option><option>Phonk</option>
+        </datalist>
+      </label>
+      <label>7) Дата релиза (от 2 недель) <span class="req">*</span>
+        <input type="date" name="Дата релиза" id="releaseDate" required>
+      </label>
+    </div>
+
+    <div class="row">
+      <label>4) Композитор <span class="req">*</span>
+        <input type="text" name="Композитор" required>
+      </label>
+      <label>5) Автор текста <span class="req">*</span>
+        <input type="text" name="Автор текста" required>
+      </label>
+    </div>
+
+    <label>6) Продюсер (оставьте пустым, если нет)
+      <input type="text" name="Продюсер">
+    </label>
+
+    <label>8) Файл аудио (mp3) <span class="req">*</span>
+      <input type="file" name="Аудио" id="audio" accept=".mp3" required>
+      <div class="msg error" id="audioErr"></div>
+    </label>
+
+    <label>9) Обложка (квадрат ≥1500 px и ≤5000 px) <span class="req">*</span>
+      <input type="file" name="Обложка" id="cover" accept="image/jpeg,image/png" required>
+      <img id="coverPrev" class="preview" alt="preview">
+      <div class="msg error" id="coverErr"></div>
+    </label>
+
+    <div class="checkbox">
+      <input type="checkbox" id="addLyrics">
+      <label for="addLyrics">10) Добавить текст песни</label>
+    </div>
+    <div id="lyricsBox">
+      <textarea name="Текст песни" rows="6" placeholder="Вставьте полный текст (необязательно)"></textarea>
+    </div>
+
+    <button type="submit">Отправить</button>
+  </form>
+</div>
+
+<script>
+  // Минимальная дата = сегодня + 14 дней
+  const dateInp = document.getElementById('releaseDate');
+  const today = new Date();
+  const minDate = new Date(today.getTime() + 14*24*60*60*1000);
+  dateInp.setAttribute('min', minDate.toISOString().split('T')[0]);
+
+  // Показать/скрыть текст песни
+  document.getElementById('addLyrics').addEventListener('change', e=>{
+    document.getElementById('lyricsBox').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  // Валидация аудио
+  const audioInp = document.getElementById('audio');
+  const audioErr = document.getElementById('audioErr');
+  audioInp.addEventListener('change',()=>{
+    const f=audioInp.files[0];
+    audioErr.textContent='';
+    if(!f) return;
+    if(!/\.mp3$/i.test(f.name)){audioErr.textContent='Требуется mp3 файл.';}
+    if(f.size>20*1024*1024){audioErr.textContent='Файл >20 МБ — Formspree не примет.';}
+  });
+
+  // Валидация обложки (размер в пикселях)
+  const coverInp = document.getElementById('cover');
+  const coverErr = document.getElementById('coverErr');
+  const coverPrev = document.getElementById('coverPrev');
+  coverInp.addEventListener('change',()=>{
+    coverErr.textContent=''; coverPrev.style.display='none';
+    const f=coverInp.files[0];
+    if(!f) return;
+    const img = new Image();
+    img.onload = ()=>{
+      if(img.width!==img.height){coverErr.textContent='Обложка должна быть квадратной.';}
+      else if(img.width<1500||img.width>5000){coverErr.textContent=`Размер ${img.width}px. Нужно 1500-5000 px.`;}
+      else{coverPrev.src=img.src;coverPrev.style.display='block';}
+    };
+    img.onerror = ()=>{coverErr.textContent='Не удалось прочитать изображение.';}
+    img.src = URL.createObjectURL(f);
+  });
+</script>
+</body>
+</html>
